@@ -1,0 +1,18 @@
+# Framework principal da API
+fastapi==0.115.0
+
+# Servidor ASGI para rodar a aplicação
+uvicorn[standard]==0.30.6
+
+# Variáveis de ambiente (.env)
+python-dotenv==1.0.1
+
+# Validação de dados (já vem com FastAPI, mas deixo fixado)
+pydantic==2.9.2
+
+# Testes
+pytest==8.3.3
+httpx==0.27.2
+
+# Utilitários opcionais
+orjson==3.10.7    # serialização JSON mais rápida
