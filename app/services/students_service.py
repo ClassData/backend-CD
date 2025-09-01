@@ -1,23 +1,57 @@
 import json
 import os
 
-DATA_PATH = "datasets/Students Performance Dataset.json"  
+DATA_PATH = "datasets/"  
 
 def get_student_by_registration(registration: str):
     """
-    Retorna os dados do aluno com a matrícula fornecida.
+    Retorna os dados do aluno com a matrícula fornecida, buscando o arquivo Json 
+    correspondente na pasta datasets.
     """
     if not os.path.exists(DATA_PATH):
         return None
+    
+    #pega o final do nome do arquivo Json
+    registration_number = f"_{registration}.json"
 
-    with open(DATA_PATH, "r", encoding="utf-8") as f:
-         for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            student = json.loads(line)
-            if student.get("Student_ID") == registration:
-                return student
-    print("Testando matrícula:", registration, "Arquivo encontrado?", os.path.exists(DATA_PATH))
+    # Listar os arquivos no diretorio.
+    for filename in os.listdir(DATA_PATH):
+      
+    # Verifica se o nome do arquivo termina com a matrícula
+      if filename.endswith(registration_number):
+        file_path = os.path.join(DATA_PATH, filename)
+
+        #Abre e le o arquivo Json encontrado
+        with open(file_path, "r", encoding="utf-8") as f: 
+            student_data = json.load(f)
+            return student_data
+
+    print(f'Nenhum arquivo encontrado para a matrícula: {registration}')
 
     return None
+
+def calculate_student_overall_avarege(registration: str):
+    """
+    Calcula a média de um aluno a partir dos dados de notas.
+    Esta é uma função de exemplo e pode precisar de ajustes.
+    """
+
+    student_data = get_student_by_registration(registration)
+    if not student_data:
+        return None
+    
+    # vamos pegar a media final de todas as disciplinas dos alunos 
+    final_grades = []
+    for disciplinas in student_data:
+       if "media_final" in disciplinas:
+          final_grades.append(disciplinas['media_final'])
+
+    # se não tiver notas, não calcula      
+    if not final_grades:
+      return {"registration": registration, "overall_average": 0}   
+
+    # media geral de todas as disciplinas
+    overall_average = sum(final_grades) / len(final_grades)
+
+    # retorna o resultado 
+    return {"registration": registration, "overall_average": round(overall_average, 2)}

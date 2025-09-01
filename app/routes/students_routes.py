@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
-from app.services.students_service import get_student_by_registration
+from app.services.students_service import get_student_by_registration, calculate_student_overall_avarege
 
 router = APIRouter(prefix="/students",tags=["Students"])
 
