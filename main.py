@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.routes import api_router
 from app import config
+from app.routes import students_routes, graphics_routes
 import os
 import sys
 
@@ -12,6 +13,7 @@ app = FastAPI(
 
 # Register all routes
 app.include_router(api_router)
+app.include_router(graphics_routes.router)
 
 
 @app.get("/")

@@ -12,3 +12,17 @@ def get_student(registration: str = Query(..., description="Student registration
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     return student
+
+
+# rota criada para a função de média geral do aluno (em todas as disciplinas)
+@router.get("/{registration}/media-geral")
+def get_overall_average_route(registration: str):
+    """
+    Retorna a média geral de um aluno em todas as disciplinas.
+    """
+    result = calculate_student_overall_avarege(registration)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    return result

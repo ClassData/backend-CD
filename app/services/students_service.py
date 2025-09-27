@@ -3,6 +3,8 @@ import os
 
 DATA_PATH = "datasets/"  
 
+# rota criada
+# ex: http://127.0.0.1:8000/students/?registration=44335
 def get_student_by_registration(registration: str):
     """
     Retorna os dados do aluno com a matrícula fornecida, buscando o arquivo Json 
@@ -30,10 +32,12 @@ def get_student_by_registration(registration: str):
 
     return None
 
+
+# rota criada 
+# ex: http://127.0.0.1:8000/students/44335/media-geral
 def calculate_student_overall_avarege(registration: str):
     """
     Calcula a média de um aluno a partir dos dados de notas.
-    Esta é uma função de exemplo e pode precisar de ajustes.
     """
 
     student_data = get_student_by_registration(registration)
@@ -48,10 +52,10 @@ def calculate_student_overall_avarege(registration: str):
 
     # se não tiver notas, não calcula      
     if not final_grades:
-      return {"registration": registration, "overall_average": 0}   
+      return {"Matricula": registration, "média geral do aluno": 0}   
 
     # media geral de todas as disciplinas
     overall_average = sum(final_grades) / len(final_grades)
 
     # retorna o resultado 
-    return {"registration": registration, "overall_average": round(overall_average, 2)}
+    return {"Matricula": registration, "Média geral do aluno": round(overall_average, 2)}
