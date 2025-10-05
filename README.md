@@ -23,9 +23,9 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ## Rotas
+Host: 127.0.0.1:8000
 
 ### GET /health
-Host: 127.0.0.1:8000
 
 **Descrição:** Testar a atividade do sistema.
 
@@ -33,15 +33,15 @@ Host: 127.0.0.1:8000
 
 **Descrição:** Retorna todos estudantes.
 
-### GET /students/?registration=<matricula> HTTP/1.1
+### GET /students/?registration={matricula}
 
 **Descrição:** Retorna informações cadastrais do usuário a partir da matrícula.
 
-### GET /students/<matricula>/frequency
+### GET /students/{matricula}/frequency
 
 **Descrição:** Retorna a média de frequência do aluno.
 
-### GET /students/<matricula>/frequency/<disciplina>
+### GET /students/{matricula}/frequency/{disciplina}
 
 **Descrição:** Retorna as frequências do aluno na disciplina.
 
@@ -49,7 +49,7 @@ Host: 127.0.0.1:8000
 
 **Descrição:** Retorna todos os professores cadastrados.
 
-### GET /teacher?<id>
+### GET /teacher?id={id}
 
 **Descrição:** Retorna as informações do professor pelo id.
 
@@ -57,9 +57,8 @@ Host: 127.0.0.1:8000
 
 **Descrição:** Retorna todas as turmas cadastradas.
 
-### GET /classes?<id>
+### GET /classes?id={id}
 
 **Descrição:** Retorna as informações da turma pelo id.
-
 
 ### GET /grades
