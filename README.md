@@ -1,5 +1,14 @@
 # Backend Class Data
 
+## Ambiente virtual:
+
+```bash
+python3 -m venv venv
+```
+
+```bash
+source venv/bin/activate
+```
 
 ## Instalar dependências:
 
@@ -14,23 +23,42 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ## Rotas
+Host: 127.0.0.1:8000
 
 ### GET /health
 
 **Descrição:** Testar a atividade do sistema.
 
-GET /health HTTP/1.1
-Host: 127.0.0.1:8000
-
 ### GET /students
+
+**Descrição:** Retorna todos estudantes.
+
+### GET /students/?registration={matricula}
 
 **Descrição:** Retorna informações cadastrais do usuário a partir da matrícula.
 
-GET /students/?registration=<matricula> HTTP/1.1
-Host: 127.0.0.1:8000
+### GET /students/{matricula}/frequency
 
-### GET /subjects
+**Descrição:** Retorna a média de frequência do aluno.
+
+### GET /students/{matricula}/frequency/{disciplina}
+
+**Descrição:** Retorna as frequências do aluno na disciplina.
+
+### GET /teacher
+
+**Descrição:** Retorna todos os professores cadastrados.
+
+### GET /teacher?id={id}
+
+**Descrição:** Retorna as informações do professor pelo id.
 
 ### GET /classes
+
+**Descrição:** Retorna todas as turmas cadastradas.
+
+### GET /classes?id={id}
+
+**Descrição:** Retorna as informações da turma pelo id.
 
 ### GET /grades
