@@ -1,40 +1,122 @@
 import json
 import os
+import numpy as np
 
-DATA_PATH = "datasets/"  
+DATA_PATH = "datasets/alunos"
 
-# rota criada
-# ex: http://127.0.0.1:8000/students/?registration=44335
+def get_all_students():
+    """
+    Retorna todos os alunos cadastrados
+    """
+    if not os.path.exists(DATA_PATH):
+        return None
+    
+    all_students= []
+    for filename in os.listdir(DATA_PATH):
+        if filename.endswith(".json"):
+            # divide o nome em partes do arquivo em partes  (ex: "Nome_Completo_12345.json")
+            try:
+                parts = filename.replace(".json", "").split("_")
+                registration = parts[-1]
+                
+                # O nome é todo o resto, unido por espaços
+                nome_completo = " ".join(parts[:-1])
+
+                student_data = {
+                    "matricula": registration,
+                    "nomeCompleto": nome_completo,
+                    "coeficiente": calculate_student_overall_avarege(registration).get("Média geral do aluno"),
+                    "frequenciaMedia": get_student_frequency_average(registration).get("Média de frequências")
+                }
+                all_students.append(student_data)
+            except (IndexError, ValueError) as e:
+                print(f"[AVISO] O arquivo '{filename}' não segue o padrão de nome esperado e foi ignorado.")
+
+    return all_students
+
+ 
+    
 def get_student_by_registration(registration: str):
     """
     Retorna os dados do aluno com a matrícula fornecida, buscando o arquivo Json 
     correspondente na pasta datasets.
     """
-    if not os.path.exists(DATA_PATH):
-        return None
+   
+    if not os.path.isdir(DATA_PATH):
+         print(f"Erro: O diretório '{DATA_PATH}' não foi encontrado.")
+         return 
     
-    #pega o final do nome do arquivo Json
-    registration_number = f"_{registration}.json"
+    expected_filename_suffix = f"_{registration}.json"
 
-    # Listar os arquivos no diretorio.
     for filename in os.listdir(DATA_PATH):
-      
-    # Verifica se o nome do arquivo termina com a matrícula
-      if filename.endswith(registration_number):
-        file_path = os.path.join(DATA_PATH, filename)
+        if filename.endswith(expected_filename_suffix):
+            file_path = os.path.join(DATA_PATH, filename)
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    disciplinas_data = json.load(f)
+                
+                # Extrai o nome completo do aluno a partir do nome do arquivo
+                nome_completo = filename.replace(expected_filename_suffix, "").replace("_", " ")
 
-        #Abre e le o arquivo Json encontrado
-        with open(file_path, "r", encoding="utf-8") as f: 
-            student_data = json.load(f)
-            return student_data
+                return {
+                    "matricula": registration,
+                    "nomeCompleto": nome_completo,
+                    "disciplinas": disciplinas_data
+                }
+            except (IOError, json.JSONDecodeError) as e:
+                print(f"Erro ao ler ou decodificar o arquivo {filename}: {e}")
+                return None
+    return None         
 
-    print(f'Nenhum arquivo encontrado para a matrícula: {registration}')
+def get_student_frequency_subject(registration: str,subject: str):
+  student_data = get_student_by_registration(registration)
+  if not student_data:
+      return None
 
-    return None
+  final_frequencies = []
+  for disciplina in student_data["disciplinas"]:
+      freq = disciplina.get("frequencia_total")
+      if freq:
+          try:
+              freq_value = float(freq.replace("%", ""))
+              final_frequencies.append(freq_value)
+          except ValueError:
+              pass  
+
+  if not final_frequencies:
+      return {"Matricula": registration, "Média de frequências": 0}
+
+  overall_average = sum(final_frequencies) / len(final_frequencies)
+
+  return {"Matricula": registration, "Média de frequências": round(overall_average, 2)}
 
 
-# rota criada 
-# ex: http://127.0.0.1:8000/students/44335/media-geral
+def get_student_frequency_average(registration: str):
+  """
+  Retorna a media de frequencia do aluno com a matrícula fornecida
+  """
+  student_data = get_student_by_registration(registration)
+  if not student_data:
+      return None
+
+  final_frequencies = []
+  for disciplina in student_data["disciplinas"]:
+      freq = disciplina.get("frequencia_total")
+      if freq:
+          try:
+              freq_value = float(freq.replace("%", ""))
+              final_frequencies.append(freq_value)
+          except ValueError:
+              pass  
+
+  if not final_frequencies:
+      return {"Matricula": registration, "Média de frequências": 0}
+
+  overall_average = sum(final_frequencies) / len(final_frequencies)
+
+  return {"Matricula": registration, "Média de frequências": round(overall_average, 2)}
+
+
 def calculate_student_overall_avarege(registration: str):
     """
     Calcula a média de um aluno a partir dos dados de notas.
@@ -46,7 +128,7 @@ def calculate_student_overall_avarege(registration: str):
     
     # vamos pegar a media final de todas as disciplinas dos alunos 
     final_grades = []
-    for disciplinas in student_data:
+    for disciplinas in student_data["disciplinas"]:
        if "media_final" in disciplinas:
           final_grades.append(disciplinas['media_final'])
 
