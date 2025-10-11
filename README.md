@@ -1,5 +1,7 @@
 # Backend Class Data
 
+---
+
 ## Ambiente virtual:
 
 ```bash
@@ -21,6 +23,8 @@ pip install -r requirements.txt
 ```bash
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+---
 
 ## Rotas
 Host: 127.0.0.1:8000
@@ -73,6 +77,9 @@ Host: 127.0.0.1:8000
 **Descrição:** Retorna uma imagem de um gráfico de dispersão que correlaciona a frequência total com a média final para cada disciplina de um aluno específico.
 
 ### GET /graphics/{registration}/status_aprovacao
+
+---
+
 
 **Descrição:** Retorna uma imagem de um gráfico de pizza mostrando a proporção de disciplinas aprovadas e reprovadas para um aluno específico.
 
