@@ -78,11 +78,12 @@ Host: 127.0.0.1:8000
 
 ### GET /graphics/{registration}/status_aprovacao
 
----
-
-
 **Descrição:** Retorna uma imagem de um gráfico de pizza mostrando a proporção de disciplinas aprovadas e reprovadas para um aluno específico.
 
 ### GET /graphics/disciplina/{discipline_name}/desempenho_geral
 
 **Descrição:** Retorna uma imagem de um gráfico de dispersão anônimo que correlaciona a frequência com a média final de todos os alunos para uma disciplina específica.
+
+---
+
+
