@@ -40,6 +40,7 @@ def get_frequencys_route(registration: str):
     return result
 
 # rota criada para a função de média geral do aluno (em todas as disciplinas)
+# ex: http://127.0.0.1:8000/students/44335/media-geral
 @router.get("/{registration}/media-geral")
 def get_overall_average_route(registration: str):
     """
