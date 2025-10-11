@@ -116,6 +116,53 @@ def get_student_frequency_average(registration: str):
 
   return {"Matricula": registration, "Média de frequências": round(overall_average, 2)}
 
+def get_student_frequency_subject(registration: str,subject: str):
+  student_data = get_student_by_registration(registration)
+  if not student_data:
+      return None
+
+  final_frequencies = []
+  for disciplina in student_data:
+      freq = disciplina.get("frequencia_total")
+      if freq:
+          try:
+              freq_value = float(freq.replace("%", ""))
+              final_frequencies.append(freq_value)
+          except ValueError:
+              pass  
+
+  if not final_frequencies:
+      return {"Matricula": registration, "Média de frequências": 0}
+
+  overall_average = sum(final_frequencies) / len(final_frequencies)
+
+  return {"Matricula": registration, "Média de frequências": round(overall_average, 2)}
+  return None
+
+def get_student_frequency_average(registration: str):
+  """
+  Retorna a media de frequencia do aluno com a matrícula fornecida
+  """
+  student_data = get_student_by_registration(registration)
+  if not student_data:
+      return None
+
+  final_frequencies = []
+  for disciplina in student_data:
+      freq = disciplina.get("frequencia_total")
+      if freq:
+          try:
+              freq_value = float(freq.replace("%", ""))
+              final_frequencies.append(freq_value)
+          except ValueError:
+              pass  
+
+  if not final_frequencies:
+      return {"Matricula": registration, "Média de frequências": 0}
+
+  overall_average = sum(final_frequencies) / len(final_frequencies)
+
+  return {"Matricula": registration, "Média de frequências": round(overall_average, 2)}
 
 def calculate_student_overall_avarege(registration: str):
     """
