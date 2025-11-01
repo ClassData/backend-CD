@@ -79,3 +79,13 @@ Host: 127.0.0.1:8000
 ### GET /graphics/disciplina/{discipline_name}/desempenho_geral
 
 **Descrição:** Retorna uma imagem de um gráfico de dispersão anônimo que correlaciona a frequência com a média final de todos os alunos para uma disciplina específica.
+
+### GET /graphics/disciplinas/ranking_dificuldade
+
+**Descrição:** retorna um gráfico de barras duplo que analisa o desempenho em todas as disciplinas de um curso. O gráfico exibe a média final geral e a taxa de aprovação para cada disciplina, ordenado da mais difícil (menor média) para a mais fácil.
+
+### GET /graphics/disciplina/{discipline_name}/comparativo_professores
+
+**Descrição:** Retorna um gráfico de boxplot que compara a distribuição das médias finais dos alunos em uma disciplina específica, agrupando-os por professor ou turma. Parâmetro de Caminho: {discipline_name},  O nome da disciplina para a qual o comparativo será gerado (ex: "Inteligência Artificial"), no momento só a materia de inteligencia artificial tem 2 turmas. mas é uma função para comparar o desempenho entre dois professores.
+
+

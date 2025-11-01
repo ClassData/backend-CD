@@ -5,6 +5,8 @@ matplotlib.use('Agg') # usa um renderizador de alta qualidade sem precisar de um
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+import pandas as pd
+import seaborn as sns 
 
 from .students_service import get_student_by_registration
 
@@ -240,6 +242,183 @@ def grafico_frequencia_notas_disciplina(nome_da_disciplina:str):
     plt.close()
 
     return img_buffer
+
+# Fazendo graficos mais complexos.
+
+def carregar_dados_todos_alunos(caminho_pasta_alunos="datasets/alunos"):
+    """
+    Lê todos os arquivos JSON da pasta de alunos e os consolida em um DataFrame pandas.
+    """
+    dados_completos = []
+    
+    if not os.path.isdir(caminho_pasta_alunos):
+        print(f"Erro: Diretório não encontrado '{caminho_pasta_alunos}'")
+        return pd.DataFrame() # Retorna DataFrame vazio
+
+    for nome_arquivo in os.listdir(caminho_pasta_alunos):
+        if nome_arquivo.endswith(".json"):
+            # Extrai o "username" do aluno a partir do nome do arquivo
+            # Ex: "arthur_rodrigues_435678.json" -> "arthur_rodrigues"
+            partes_nome = nome_arquivo.split('_')
+            username_aluno = f"{partes_nome[0]}_{partes_nome[1]}"
+            
+            caminho_completo = os.path.join(caminho_pasta_alunos, nome_arquivo)
+            try:
+                with open(caminho_completo, 'r', encoding='utf-8') as f:
+                    dados_aluno = json.load(f)
+                    # Adiciona o username a cada registro de disciplina
+                    for disciplina in dados_aluno:
+                        disciplina['username_aluno'] = username_aluno
+                        dados_completos.append(disciplina)
+            except Exception as e:
+                print(f"Erro ao ler o arquivo {nome_arquivo}: {e}")
+                
+    return pd.DataFrame(dados_completos)
+
+# agora vamos fazer um rankingh de dificuladade das disciplinas 
+
+# ex: http://127.0.0.1:8000/graphics/disciplinas/ranking_dificuldade
+def gerar_ranking_dificuldade_disciplinas():
+    """
+    Gera um gráfico de barras horizontal mostrando a média final e a taxa de aprovação
+    para cada disciplina, ordenado da mais difícil para a mais fácil.
+    """
+    # Carregar e processar os dados
+    df_alunos = carregar_dados_todos_alunos()
+    if df_alunos.empty:
+        return None
+    
+    # Converte 'frequencia_total' para numérico (ex: "91.2%" -> 91.2)
+    df_alunos['frequencia_num'] = df_alunos['frequencia_total'].str.replace('%', '').astype(float)
+    # Converte 'status_aprovacao' para binário (Aprovado=1, Reprovado=0)
+    df_alunos['aprovado_bin'] = (df_alunos['status_aprovacao'] == 'Aprovado').astype(int)
+
+    #  Agregando os dados por disciplina
+    df_disciplinas = df_alunos.groupby('disciplina').agg(
+        media_final_geral=('media_final', 'mean'),
+        taxa_aprovacao_geral=('aprovado_bin', 'mean'),
+        frequencia_media_geral=('frequencia_num', 'mean')
+    ).reset_index()
+
+    # Multiplica a taxa de aprovação por 100 para visualização
+    df_disciplinas['taxa_aprovacao_geral'] *= 100
+    
+    # Ordena pela média final (da menor para a maior)
+    df_disciplinas = df_disciplinas.sort_values(by='media_final_geral', ascending=True)
+
+    # Criar o gráfico (dois subplots lado a lado)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 10))
+    fig.suptitle('Análise de Dificuldade das Disciplinas', fontsize=20)
+
+    # Gráfico 1: Média Final
+    sns.barplot(x='media_final_geral', y='disciplina', data=df_disciplinas, ax=ax1, color='salmon')
+    ax1.set_title('Média Final Geral por Disciplina')
+    ax1.set_xlabel('Média Final (0-10)')
+    ax1.set_ylabel('Disciplina')
+    ax1.set_xlim(0, 10)
+    # Adiciona os valores nas barras
+    for p in ax1.patches:
+        ax1.annotate(f"{p.get_width():.1f}", (p.get_width() + 0.1, p.get_y() + p.get_height() / 2),
+                     va='center')
+
+    # Gráfico 2: Taxa de Aprovação
+    sns.barplot(x='taxa_aprovacao_geral', y='disciplina', data=df_disciplinas, ax=ax2, color='mediumseagreen')
+    ax2.set_title('Taxa de Aprovação Geral por Disciplina')
+    ax2.set_xlabel('Taxa de Aprovação (%)')
+    ax2.set_ylabel('') # Remove o label Y duplicado
+    ax2.set_xlim(0, 100)
+    # Adiciona os valores nas barras
+    for p in ax2.patches:
+        ax2.annotate(f"{p.get_width():.1f}%", (p.get_width() + 1, p.get_y() + p.get_height() / 2),
+                     va='center')
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95]) # Ajusta para o supertítulo
+
+    # Salva no buffer
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format='png')
+    img_buffer.seek(0)
+    plt.close()
+
+    return img_buffer
+
+
+# vamos tentar algo que conecte os 3 jsons 
+
+# comparativo de desempenho por professor 
+
+def gerar_comparativo_desempenho_professor(nome_da_disciplina: str):
+    """
+    Gera um boxplot comparando a distribuição das médias finais entre
+    professores de mesma disciplina.
+    """
+    # Carregar dados das turmas 
+    try:
+        df_turmas = pd.read_json("datasets/turmas.json")
+    except Exception as e:
+        print(f"Erro ao ler turmas.json: {e}")
+        return None
+        
+    # Carregar dados de todos os alunos (usando a função que criamos)
+    df_alunos = carregar_dados_todos_alunos()
+    if df_alunos.empty:
+        return None
+
+    # 3 Filtrar os dados APENAS para a disciplina de interesse
+    df_turmas_disciplina = df_turmas[df_turmas['disciplina'] == nome_da_disciplina].copy()
+    df_alunos_disciplina = df_alunos[df_alunos['disciplina'] == nome_da_disciplina].copy()
+
+    if df_turmas_disciplina.empty or df_alunos_disciplina.empty:
+        return None 
+
+    
+    # A lista de professores pode ter múltiplos nomes, então convertemos para string
+    # Ex: ["Ricardo Almeida", "Vanessa Campos"] -> "Ricardo Almeida, Vanessa Campos"
+    df_turmas_disciplina['nome_professor'] = df_turmas_disciplina['professor(es)'].apply(lambda x: ", ".join(x))
+    
+    # "Explode" a lista de alunos: cria uma linha para cada aluno na turma
+    df_mapeamento = df_turmas_disciplina.explode('alunos')
+    
+    # Renomeia a coluna 'alunos' para 'username_aluno' para o merge
+    df_mapeamento = df_mapeamento.rename(columns={'alunos': 'username_aluno'})
+    
+    # Junta os dados dos alunos (com as notas) com os dados das turmas (com os professores)
+    df_final = pd.merge(
+        df_alunos_disciplina,
+        df_mapeamento[['username_aluno', 'nome_professor']],
+        on='username_aluno',
+        how='inner' # Só mantém alunos que estão em uma turma
+    )
+
+    if df_final.empty or df_final['nome_professor'].nunique() < 2:
+        # Não é possível comparar se não houver dados ou se houver apenas 1 professor
+        return None
+
+    # 5. Gerar o Gráfico (Boxplot)
+    plt.figure(figsize=(10, 7))
+    sns.boxplot(x='nome_professor', y='media_final', data=df_final, palette='pastel', hue='nome_professor' , legend=False)
+    
+    # Adiciona os pontos de dados (alunos) sobre o boxplot para mais detalhes
+    sns.stripplot(x='nome_professor', y='media_final', data=df_final, color='black', alpha=0.5, jitter=0.1)
+
+    plt.title(f'Comparativo de Desempenho em: {nome_da_disciplina}')
+    plt.xlabel('Professor(es) da Turma')
+    plt.ylabel('Média Final dos Alunos')
+    plt.ylim(0, 10.5)
+    plt.grid(True, linestyle='--', alpha=0.6, axis='y')
+    plt.tight_layout()
+    
+    # Salva no buffer
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format='png')
+    img_buffer.seek(0)
+    plt.close()
+
+    return img_buffer
+
+
+
+
 
 
 
