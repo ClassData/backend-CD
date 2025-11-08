@@ -1,30 +1,28 @@
-import json
+from supabase import create_client, Client
 import os
-
-DATA_PATH = "datasets"
+from dotenv import load_dotenv
+load_dotenv()
+url = os.getenv("SUPABASE_URL")
+key = os.getenv("SUPABASE_KEY")
+supabase = create_client(url, key)
 
 def get_teachers():
     """
-    Retorna todos os professores cadastrados
+        Retorna todos os professores cadastrados
     """
-    if not os.path.exists(DATA_PATH):
-        return None
-
-    file_path = os.path.join(DATA_PATH, "professores.json")
-
-    if not os.path.exists(file_path):
-        return None
 
     teachers_list = []
-    with open(file_path, "r", encoding="utf-8") as t:
-        teachers = json.load(t)
+    teachers = supabase.table("teachers").select("*").execute()
+    print("\n=== Professores ===")
+    for t in teachers.data:
+        print(f"{t['id']} - {t['name']} - {t['age']} - {t['department_id']}")
 
-        for teacher in teachers:
-            teachers_list.append({
-                "id": teacher.get("id"),
-                "nome": teacher.get("nome"),
-                "disciplinas": teacher.get("disciplinas", [])
-            })
+        teachers_list.append({
+            "id": t['id'],
+            "nome": t['name'],
+            "disciplinas": t['age'],
+            "departamento": t['department_id']
+        })
 
     return teachers_list
 
@@ -32,25 +30,16 @@ def get_teacher_infos(id: str):
     """
     Retorna todos os alunos cadastrados
     """
-    if not os.path.exists(DATA_PATH):
+    response = supabase.table("teachers").select("*").eq("id", id).execute()
+
+    if response.data:
+        t = response.data[0]
+        return {
+            "id": t['id'],
+            "nome": t['name'],
+            "disciplinas": t['age'],
+            "departamento": t['department_id']
+        }
+    else:
+        print(f"[DEBUG] No teacher founded for ID {id}")
         return None
-
-    file_path = os.path.join(DATA_PATH, "professores.json")
-
-    if not os.path.exists(file_path):
-        print("[DEBUG] Arquivo professores.json não encontrado")
-        return None
-
-    with open(file_path, "r", encoding="utf-8") as t:
-        teachers = json.load(t)
-
-        for teacher in teachers:
-            if str(teacher.get("id")) == str(id):
-                return {
-                    "id": teacher.get("id"),
-                    "nome": teacher.get("nome"),
-                    "disciplinas": teacher.get("disciplinas", [])
-                }
-
-    print(f"[DEBUG] No teacher founded for ID {id}")
-    return None

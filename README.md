@@ -29,44 +29,80 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ## Rotas
 Host: 127.0.0.1:8000
 
-### GET /health
+### GET /health         ----OK----
 
 **Descrição:** Testar a atividade do sistema.
 
-### GET /students
+--- 
+
+## Dados de Estudantes
+
+### GET /students       ----OK----
 
 **Descrição:** Retorna todos estudantes.
 
-### GET /students/?registration={matricula}
+### GET /students/?registration={matricula} ----OK----
 
 **Descrição:** Retorna informações cadastrais do usuário a partir da matrícula.
 
-### GET /students/{matricula}/frequency
+<!-- ### GET /students/{matricula}/frequency   
 
-**Descrição:** Retorna a média de frequência do aluno.
+**Descrição:** Retorna a média de frequência do aluno em todas as . -->
 
-### GET /students/{matricula}/frequency/{disciplina}
+**Descrição:** Retorna as turmas que o professor é responsável.
+
+### GET /students/{registration}/frequency/{class_id}  ----OK----
 
 **Descrição:** Retorna as frequências do aluno na disciplina.
+**Exemplo de retorno:**
+{
+    "registration":"150000","subject_id":"021be5c0-ce0e-4515-b3ab-b047e1058cce",
+    "total_aulas":72,
+    "aulas_presente":67,
+    "frequencia":93.06
+}
 
-### GET /teacher
+--- 
+
+## Dados de Professores
+
+### GET /teacher          ----OK----
 
 **Descrição:** Retorna todos os professores cadastrados.
 
-### GET /teacher?id={id}
+### GET /teacher?id={id} ----OK----
 
 **Descrição:** Retorna as informações do professor pelo id.
 
-### GET /classes
+### GET /teacher?id={id}/classes
+
+**Descrição:** Retorna as turmas que o professor é responsável.
+
+--- 
+
+## Dados de Turmas 
+
+### GET /classes         ----OK----
 
 **Descrição:** Retorna todas as turmas cadastradas.
 
-### GET /classes?id={id}
+### GET /classes?id={id} ----OK----
 
 **Descrição:** Retorna as informações da turma pelo id.
 
-### GET /grades
+--- 
 
+## Notas dos alunos
+
+### GET /grades/{registration}/{class_id}
+**Descrição:** Retorna as informações da turma pelo id.
+**Exemplo de retorno:**
+{
+    "registration":"150000","subject_id":"021be5c0-ce0e-4515-b3ab-b047e1058cce",
+    "total_aulas":72,
+    "aulas_presente":67,
+    "frequencia":93.06
+}
 
 ### GET /graphics/{registration}/evolucao_das_notas
 
@@ -85,5 +121,3 @@ Host: 127.0.0.1:8000
 **Descrição:** Retorna uma imagem de um gráfico de dispersão anônimo que correlaciona a frequência com a média final de todos os alunos para uma disciplina específica.
 
 ---
-
-
