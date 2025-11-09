@@ -44,7 +44,7 @@ for t in teachers.data:
 students = supabase.table("students").select("*").execute()
 print("\n=== Estudantes ===")
 for s in students.data:
-    print(f"{c['id']} - {c['registration']} - {c['name']} - {c['age']} - {c['couse_id']}")
+    print(f"{s['id']} - {s['registration']} - {s['name']} - {s['age']} - {s['course_id']}")
     
 # Get Notas
 grades = supabase.table("grades").select("*").execute()
@@ -68,7 +68,7 @@ for t in classes_teachers.data:
 classes_students = supabase.table("classes_students").select("*").execute()
 print("\n=== Estudante e suas Turmas ===")
 for t in classes_students.data:
-    print(f"{t['class_id']} - {t['student_registration']}")
+    print(f"{t['class_id']} - {t['student_id']}")
 
 # Get Presencas
 attendance = supabase.table("attendance").select("*").execute()

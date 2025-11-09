@@ -3,7 +3,7 @@ from app.services.teacher_services import *
 
 router = APIRouter(prefix="/teacher",tags=["Students"])
 
-@router.get("")
+@router.get("/")
 def get_teacher(
     id: str = Query(None, description="Teacher id")
 ):

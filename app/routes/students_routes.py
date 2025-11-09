@@ -3,7 +3,7 @@ from app.services.students_service import *
 
 router = APIRouter(prefix="/students",tags=["Students"])
 
-@router.get("")
+@router.get("/")
 def get_student(
     registration: str = Query(None, description="Student registration number")
 ):

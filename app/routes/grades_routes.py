@@ -3,7 +3,7 @@ from app.services.grades_services import get_all_grades, get_student_grades_in_c
 
 router = APIRouter(prefix="/grades",tags=["Grades"])
 
-@router.get("")
+@router.get("/")
 def get_student_all_grades_route(
     registration: str = Query(..., description="Student registration number")
 ):
@@ -39,4 +39,4 @@ def get_student_grades_in_class_route(registration: str, class_id: str):
         "grades": grades
     }
 
-    curl -X GET "http://localhost:8000/grades/150001/685f4e66-7a47-4f93-814a-04746f0954a7"
+#    curl -X GET "http://localhost:8000/grades/150001/685f4e66-7a47-4f93-814a-04746f0954a7"
