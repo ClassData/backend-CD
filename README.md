@@ -18,6 +18,10 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+```bash
+sudo apt install uvicorn
+```
+
 ## Rodar a aplicação
 
 ```bash
@@ -45,10 +49,6 @@ Host: 127.0.0.1:8000
 
 **Descrição:** Retorna informações cadastrais do usuário a partir da matrícula.
 
-<!-- ### GET /students/{matricula}/frequency   
-
-**Descrição:** Retorna a média de frequência do aluno em todas as . -->
-
 **Descrição:** Retorna as turmas que o professor é responsável.
 
 ### GET /students/{registration}/frequency/{class_id}  ----OK----
@@ -70,14 +70,42 @@ Host: 127.0.0.1:8000
 
 **Descrição:** Retorna todos os professores cadastrados.
 
-### GET /teacher?id={id} ----OK----
+### GET /teacher?id={id}  ----OK----
 
 **Descrição:** Retorna as informações do professor pelo id.
 
-### GET /teacher?id={id}/classes
+### GET /teacher/classes?id={teacher_id} ----OK----
 
-**Descrição:** Retorna as turmas que o professor é responsável.
+**Descrição:** Retorna as turmas que o professor é responsável e os dados das turmas.
 
+**Exemplo de retorno:**
+[
+    {
+        "class_id": "0a93f322-d7ba-43e2-9be1-5d58436177a9",
+        "class_name": "TurmaA",
+        "teacher_id": "14772494-cd85-44fd-952d-82e4bb4c92a8",
+        "students": [
+            {
+                "student_id": 150035,
+                "student_name": "Kevin Lopes",
+                "student_uuid": "013d260a-ef56-4de5-8806-2a6173af2106",
+                "attendances": [
+                { "date": "2025-04-02", "present": true },
+                { "date": "2025-04-07", "present": false },
+                { "date": "2025-04-09", "present": true },
+                { "date": "2025-04-14", "present": true },
+                ...
+                ],
+                "grades": [
+                { "evaluation_number": 1, "value": 5.9 },
+                { "evaluation_number": 2, "value": 6.8 },
+                { "evaluation_number": 3, "value": 8.6 },
+                { "evaluation_number": 4, "value": 7.9 }
+                ]
+            }, ....
+        ]
+    }
+]
 --- 
 
 ## Dados de Turmas 
