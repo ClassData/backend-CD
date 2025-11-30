@@ -1,36 +1,27 @@
-import json
+from supabase import create_client, Client
 import os
-import numpy as np
-
-DATA_PATH = "datasets/alunos"
+from dotenv import load_dotenv
+load_dotenv()
+url = os.getenv("SUPABASE_URL")
+key = os.getenv("SUPABASE_KEY")
+supabase = create_client(url, key)
 
 def get_all_students():
     """
     Retorna todos os alunos cadastrados
     """
-    if not os.path.exists(DATA_PATH):
-        return None
+    all_students = []
+    response = supabase.table("students").select("*").execute()
+    for r in response.data:
+        # print(f"{r['id']} - {r['registration']} - {r['name']} - {r['age']} - {r['course_id']}")
     
-    all_students= []
-    for filename in os.listdir(DATA_PATH):
-        if filename.endswith(".json"):
-            # divide o nome em partes do arquivo em partes  (ex: "Nome_Completo_12345.json")
-            try:
-                parts = filename.replace(".json", "").split("_")
-                registration = parts[-1]
-                
-                # O nome é todo o resto, unido por espaços
-                nome_completo = " ".join(parts[:-1])
-
-                student_data = {
-                    "matricula": registration,
-                    "nomeCompleto": nome_completo,
-                    "coeficiente": calculate_student_overall_avarege(registration).get("Média geral do aluno"),
-                    "frequenciaMedia": get_student_frequency_average(registration).get("Média de frequências")
-                }
-                all_students.append(student_data)
-            except (IndexError, ValueError) as e:
-                print(f"[AVISO] O arquivo '{filename}' não segue o padrão de nome esperado e foi ignorado.")
+        all_students.append({
+            "id": r['id'],
+            "matricula": r['registration'],
+            "nome": r['name'],
+            "idade": r['age'],
+            "curso": r['course_id']
+        })
 
     return all_students
 
@@ -41,150 +32,73 @@ def get_student_by_registration(registration: str):
     Retorna os dados do aluno com a matrícula fornecida, buscando o arquivo Json 
     correspondente na pasta datasets.
     """
-   
-    if not os.path.isdir(DATA_PATH):
-         print(f"Erro: O diretório '{DATA_PATH}' não foi encontrado.")
-         return 
-    
-    expected_filename_suffix = f"_{registration}.json"
+    response = supabase.table("students").select("*").eq("registration", registration).execute()
 
-    for filename in os.listdir(DATA_PATH):
-        if filename.endswith(expected_filename_suffix):
-            file_path = os.path.join(DATA_PATH, filename)
-            try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    disciplinas_data = json.load(f)
-                
-                # Extrai o nome completo do aluno a partir do nome do arquivo
-                nome_completo = filename.replace(expected_filename_suffix, "").replace("_", " ")
+    if response.data:
+        r = response.data[0]
+        return {
+            "id": r['id'],
+            "matricula": r['registration'],
+            "nome": r['name'],
+            "idade": r['age'],
+            "curso": r['course_id']
+        }
+    else:
+        print(f"[DEBUG] No student founded for registration: {registration}")
+        return None       
 
-                return {
-                    "matricula": registration,
-                    "nomeCompleto": nome_completo,
-                    "disciplinas": disciplinas_data
-                }
-            except (IOError, json.JSONDecodeError) as e:
-                print(f"Erro ao ler ou decodificar o arquivo {filename}: {e}")
-                return None
-    return None         
-
-def get_student_frequency_subject(registration: str,subject: str):
-  student_data = get_student_by_registration(registration)
-  if not student_data:
-      return None
-
-  final_frequencies = []
-  for disciplina in student_data["disciplinas"]:
-      freq = disciplina.get("frequencia_total")
-      if freq:
-          try:
-              freq_value = float(freq.replace("%", ""))
-              final_frequencies.append(freq_value)
-          except ValueError:
-              pass  
-
-  if not final_frequencies:
-      return {"Matricula": registration, "Média de frequências": 0}
-
-  overall_average = sum(final_frequencies) / len(final_frequencies)
-
-  return {"Matricula": registration, "Média de frequências": round(overall_average, 2)}
-
-
-def get_student_frequency_average(registration: str):
-  """
-  Retorna a media de frequencia do aluno com a matrícula fornecida
-  """
-  student_data = get_student_by_registration(registration)
-  if not student_data:
-      return None
-
-  final_frequencies = []
-  for disciplina in student_data["disciplinas"]:
-      freq = disciplina.get("frequencia_total")
-      if freq:
-          try:
-              freq_value = float(freq.replace("%", ""))
-              final_frequencies.append(freq_value)
-          except ValueError:
-              pass  
-
-  if not final_frequencies:
-      return {"Matricula": registration, "Média de frequências": 0}
-
-  overall_average = sum(final_frequencies) / len(final_frequencies)
-
-  return {"Matricula": registration, "Média de frequências": round(overall_average, 2)}
-
-def get_student_frequency_subject(registration: str,subject: str):
-  student_data = get_student_by_registration(registration)
-  if not student_data:
-      return None
-
-  final_frequencies = []
-  for disciplina in student_data:
-      freq = disciplina.get("frequencia_total")
-      if freq:
-          try:
-              freq_value = float(freq.replace("%", ""))
-              final_frequencies.append(freq_value)
-          except ValueError:
-              pass  
-
-  if not final_frequencies:
-      return {"Matricula": registration, "Média de frequências": 0}
-
-  overall_average = sum(final_frequencies) / len(final_frequencies)
-
-  return {"Matricula": registration, "Média de frequências": round(overall_average, 2)}
-  return None
-
-def get_student_frequency_average(registration: str):
-  """
-  Retorna a media de frequencia do aluno com a matrícula fornecida
-  """
-  student_data = get_student_by_registration(registration)
-  if not student_data:
-      return None
-
-  final_frequencies = []
-  for disciplina in student_data:
-      freq = disciplina.get("frequencia_total")
-      if freq:
-          try:
-              freq_value = float(freq.replace("%", ""))
-              final_frequencies.append(freq_value)
-          except ValueError:
-              pass  
-
-  if not final_frequencies:
-      return {"Matricula": registration, "Média de frequências": 0}
-
-  overall_average = sum(final_frequencies) / len(final_frequencies)
-
-  return {"Matricula": registration, "Média de frequências": round(overall_average, 2)}
-
-def calculate_student_overall_avarege(registration: str):
+def get_student_frequency_subject(registration: str, subject_id: str):
     """
-    Calcula a média de um aluno a partir dos dados de notas.
+    Calcula a frequência de um aluno em uma disciplina (subject) específica,
+    buscando os dados de presença diretamente do banco.
     """
+    try:
+        response = supabase.table("students") \
+            .select("registration, attendance!inner(present, classes!inner(subject_id))") \
+            .eq("registration", registration) \
+            .eq("attendance.classes.subject_id", subject_id) \
+            .execute()
 
-    student_data = get_student_by_registration(registration)
-    if not student_data:
-        return None
+        if not response.data:
+            
+            student = get_student_by_registration(registration)
+            if not student:
+                print(f"[DEBUG] Aluno com matrícula {registration} não encontrado.")
+                return None 
+            
+            print(f"[DEBUG] Aluno {registration} não tem registros na disciplina {subject_id}.")
+            return {
+                "registration": registration,
+                "subject_id": subject_id,
+                "total_aulas": 0,
+                "aulas_presente": 0,
+                "frequencia": 0.0
+            }
+        
+        all_records = response.data[0]['attendance']
+        total_aulas = len(all_records)
+
+        if total_aulas == 0:
+            return {
+                "registration": registration,
+                "subject_id": subject_id,
+                "total_aulas": 0,
+                "aulas_presente": 0,
+                "frequencia": 0.0
+            }
+
+        aulas_presente = len([record for record in all_records if record['present'] == True])
+        frequencia = round((aulas_presente / total_aulas) * 100, 2)
+
+        return {
+            "registration": registration,
+            "subject_id": subject_id,
+            "total_aulas": total_aulas,
+            "aulas_presente": aulas_presente,
+            "frequencia": frequencia
+        }
     
-    # vamos pegar a media final de todas as disciplinas dos alunos 
-    final_grades = []
-    for disciplinas in student_data["disciplinas"]:
-       if "media_final" in disciplinas:
-          final_grades.append(disciplinas['media_final'])
+    except Exception as e:
+        print(f"Erro ao buscar frequência (pode ser UUID inválido): {e}")
+        return None 
 
-    # se não tiver notas, não calcula      
-    if not final_grades:
-      return {"Matricula": registration, "média geral do aluno": 0}   
-
-    # media geral de todas as disciplinas
-    overall_average = sum(final_grades) / len(final_grades)
-
-    # retorna o resultado 
-    return {"Matricula": registration, "Média geral do aluno": round(overall_average, 2)}

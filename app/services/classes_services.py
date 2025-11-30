@@ -1,31 +1,25 @@
-import json
+from supabase import create_client, Client
 import os
-
-DATA_PATH = "datasets"
+from dotenv import load_dotenv
+load_dotenv()
+url = os.getenv("SUPABASE_URL")
+key = os.getenv("SUPABASE_KEY")
+supabase = create_client(url, key)
 
 def get_all_classes():
     """
     Retorna as turmas
     """
-    if not os.path.exists(DATA_PATH):
-        return None
-
-    file_path = os.path.join(DATA_PATH, "turmas.json")
-
-    if not os.path.exists(file_path):
-        return None
-
     classes_list = []
-    with open(file_path, "r", encoding="utf-8") as t:
-        classes = json.load(t)
+    classes = supabase.table("classes").select("*").execute()
+    print(classes)
+    for c in classes.data:
+        print(f"{c['id']} - {c['name']} - {c['subject_id']}")
 
-        for c in classes:
-            classes_list.append({
-                "id": c.get("id"),
-                "nome": c.get("disciplina"),
-                "turma":c.get("turma"),
-                "professor(es)": c.get("professor(es)", []),
-                "alunos": c.get("alunos", [])
+        classes_list.append({
+                "id": c['id'],
+                "nome": c['name'],
+                "turma":c['subject_id'],
             })
 
     return classes_list
@@ -35,26 +29,16 @@ def get_class_infos(id: str):
     """
     Retorna a turma pelo id
     """
-    if not os.path.exists(DATA_PATH):
+
+    classes = supabase.table("classes").select("*").eq("id", id).execute()
+
+    if classes.data:
+        c = classes.data[0]
+        return {
+            "id": c['id'],
+            "nome": c['name'],
+            "disciplina": c['subject_id'],
+        }
+    else:
+        print(f"[DEBUG] Nenhuma turma encontrada com ID {id}")
         return None
-
-    file_path = os.path.join(DATA_PATH, "turmas.json")
-
-    if not os.path.exists(file_path):
-        return None
-
-    with open(file_path, "r", encoding="utf-8") as t:
-        classes = json.load(t)
-
-        for c in classes:
-            if str(c.get("id")) == str(id):
-                return {
-                    "id": c.get("id"),
-                    "nome": c.get("disciplina"),
-                    "turma":c.get("turma"),
-                    "professor(es)": c.get("professor(es)", []),
-                    "alunos": c.get("alunos", [])
-                }
-                
-    print(f"[DEBUG] No classes founded for ID {id}")
-    return None

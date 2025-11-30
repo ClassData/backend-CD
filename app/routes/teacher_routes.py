@@ -4,7 +4,7 @@ from app.services.teacher_services import *
 
 router = APIRouter(prefix="/teacher",tags=["Students"])
 
-@router.get("")
+@router.get("/")
 def get_teacher(
     id: str = Query(None, description="Teacher id")
 ):
@@ -21,6 +21,20 @@ def get_teacher(
         if not infos:
             raise HTTPException(status_code=404, detail="Teachers not found")
         return infos
+
+@router.get("/classes")
+def get_teacher_classes(
+    id: str = Query(..., description="Teacher id")
+):
+    """
+    Retorna as turmas que o professor é responsável e os dados da turma
+    """
+    classes = get_teacher_classes_service(id)
+
+    if not classes:
+        raise HTTPException(status_code=404, detail="Classes not found for this teacher")
+
+    return classes
 
 @router.get("/{registration}/frequency/{subject}")
 def get_test(registration: str, subject: str):
