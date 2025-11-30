@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query
+from app.services.students_service import get_student_frequency_subject
 from app.services.teacher_services import *
 
 router = APIRouter(prefix="/teacher",tags=["Students"])

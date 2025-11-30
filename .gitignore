@@ -1,5 +1,5 @@
 datasets
-venv
-.env
 __pycache__/
+.env
+venv
 *.pyc
