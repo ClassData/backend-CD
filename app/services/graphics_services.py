@@ -50,7 +50,7 @@ def gerar_grafico_de_linhas(registration: str):
 
         # Pegar as notas desse aluno relacionando com a turma (classes) para saber o nome da matéria
         response_grades = supabase.table("grades")\
-            .select("value, evaluation_number, classes(name)")\
+            .select("value, evaluation_number, classes(name, subjects(name))")\
             .eq("student_id", student_id)\
             .execute()
         
@@ -60,9 +60,17 @@ def gerar_grafico_de_linhas(registration: str):
         
         # Transformar em um dataframe pandas
         df = pd.DataFrame(response_grades.data)
-        
-        # Extrair o nome da disciplina do objeto aninhado 'classes': {'name': 'Matemática'} -> 'Matemática'
-        df['nome_disciplina'] = df['classes'].apply(lambda x: x['name'] if x else 'Desconhecida')
+
+        def get_subject_name(row_classes):
+            # Verifica se existe a turma, se existe a matéria dentro dela e se tem nome
+            if row_classes and 'subjects' in row_classes and row_classes['subjects']:
+                return row_classes['subjects']['name']
+            
+            # Fallback: Se não tiver matéria vinculada, usa o nome da turma mesmo
+            return row_classes.get('name', 'Desconhecida')
+
+        df['nome_disciplina'] = df['classes'].apply(get_subject_name)
+    
 
         # Criando o grafico
         plt.figure(figsize=(10, 6))
@@ -573,88 +581,89 @@ def gerar_ranking_dificuldade_disciplinas():
 
 
 def gerar_comparativo_desempenho_professor(nome_da_disciplina: str): # (Atualizado SuPABASE)
-    """
-    Gera um boxplot comparando a distribuição das médias finais entre
-    professores de mesma disciplina, buscando dados direto do Supabase.
-    """
-    #Pegar os dados da disciplina 
-    resp_subject = supabase.table("subjects").select("id").eq("name", nome_da_disciplina).execute()
-    if not resp_subject.data:
-        print(f"Disciplina '{nome_da_disciplina}' não encontrada.")
-        return None
-    subject_id = resp_subject.data[0]['id']
+    try:
+        # Descobrir o ID da Disciplina
+        resp_subject = supabase.table("subjects").select("id").eq("name", nome_da_disciplina).execute()
+        if not resp_subject.data:
+            print(f"Disciplina '{nome_da_disciplina}' não encontrada.")
+            return None
+        subject_id = resp_subject.data[0]['id']
 
-    # pegar as turmas dessas disciplinas e e seus professores 
-    resp_classes = supabase.table("classes")\
+        # Buscar Turmas e Professores
+        resp_classes = supabase.table("classes")\
             .select("id, classes_teachers(teachers(name))")\
             .eq("subject_id", subject_id)\
             .execute()
-    
-    if not resp_classes.data:
-            print("Nenhuma turma encontrada para essa disciplina.")
+
+        if not resp_classes.data:
+            print("Nenhuma turma encontrada.")
             return None
-    
-    # criar uma lista e uma biblioteca para professores e turmas
-    mapa_professores = {}
-    turmas_ids = []
 
-    for turma in resp_classes.data:
-        turma_id = turma['id']
-        turmas_ids.append(turma_id)
+        # 3Mapear Professor por Turma
+        mapa_professores = {}
+        turmas_ids = []
+
+        for turma in resp_classes.data:
+            turma_id = turma['id']
+            turmas_ids.append(turma_id)
             
-        # Extrai nomes dos professores da estrutura aninhada
-        lista_profs = []
-        if turma['classes_teachers']:
-            for item in turma['classes_teachers']:
-                if item['teachers']:
-                    lista_profs.append(item['teachers']['name'])
-        
-        # Se tiver professores, junta os nomes. Se não, chama de "Sem Professor"
-        nome_final = ", ".join(lista_profs) if lista_profs else "Não Atribuído"
-        mapa_professores[turma_id] = nome_final
+            lista_profs = []
+            if turma['classes_teachers']:
+                for item in turma['classes_teachers']:
+                    if item['teachers']:
+                        lista_profs.append(item['teachers']['name'])
+            
+            nome_final = ", ".join(lista_profs) if lista_profs else "Não Atribuído"
+            mapa_professores[turma_id] = nome_final
 
-        #Buscando as notas 
+        # Buscar Notas
+        # Precisamos do ID do aluno para calcular a média dele
         resp_grades = supabase.table("grades")\
-            .select("value, class_id")\
+            .select("value, class_id, student_id")\
             .in_("class_id", turmas_ids)\
             .execute()
-        
-        # Montar o DataFrame Final
-        df_notas = pd.DataFrame(resp_grades.data)
 
-        # Adiciona o nome do professor baseado no ID da turma (Map)
-        df_notas['nome_professor'] = df_notas['class_id'].map(mapa_professores)
-        
-        # Renomeia para facilitar o plot (para ficar igual ao seu código original)
-        df_notas = df_notas.rename(columns={'value': 'media_final'})
+        if not resp_grades.data:
+            print("Nenhuma nota lançada.")
+            return None
 
-        # Verificação mínima para gerar gráfico
-        if df_notas.empty or df_notas['nome_professor'].nunique() < 2:
-            print("Dados insuficientes para comparação (precisa de pelo menos 2 professores/turmas distintas).")
-            #  Retornar gráfico mesmo com 1 professor, se quiser, remova a condição acima.
-            if df_notas['nome_professor'].nunique() == 0:
-                return None
-            
-    # PLOTAGEM 
-    plt.figure(figsize=(10, 7))
-    
-    # Boxplot
-    sns.boxplot(x='nome_professor', y='media_final', data=df_notas, palette='pastel', hue='nome_professor', legend=False)
-    
-    # Stripplot (pontinhos pretos)
-    sns.stripplot(x='nome_professor', y='media_final', data=df_notas, color='black', alpha=0.5, jitter=0.1)
-    plt.title(f'Comparativo de Desempenho em: {nome_da_disciplina}')
-    plt.xlabel('Professor(es) da Turma')
-    plt.ylabel('Média Final dos Alunos')
-    plt.ylim(0, 10.5)
-    plt.grid(True, linestyle='--', alpha=0.6, axis='y')
-    plt.tight_layout()
-    
-    img_buffer = BytesIO()
-    plt.savefig(img_buffer, format='png')
-    img_buffer.seek(0)
-    plt.close()
-    return img_buffer
+       
+        df_todas_notas = pd.DataFrame(resp_grades.data)
+        
+        # Adiciona coluna de professor
+        df_todas_notas['nome_professor'] = df_todas_notas['class_id'].map(mapa_professores)
+
+        
+        # Isso transforma as 4 notas de prova em 1 única nota média por aluno
+        df_medias_finais = df_todas_notas.groupby(['student_id', 'nome_professor'])['value'].mean().reset_index(name='media_final')
+
+        if df_medias_finais.empty:
+            return None
+
+        # Plotando o grafico
+        plt.figure(figsize=(10, 7))
+        
+        # Usamos o DataFrame (df_medias_finais) em vez das notas soltas
+        sns.boxplot(x='nome_professor', y='media_final', data=df_medias_finais, palette='pastel', hue='nome_professor', legend=False)
+        sns.stripplot(x='nome_professor', y='media_final', data=df_medias_finais, color='black', alpha=0.5, jitter=0.1, size=6)
+
+        plt.title(f'Comparativo de Desempenho em: {nome_da_disciplina}')
+        plt.xlabel('Professor(es)')
+        plt.ylabel('Média Final dos Alunos') 
+        plt.ylim(0, 10.5)
+        plt.grid(True, linestyle='--', alpha=0.6, axis='y')
+        plt.tight_layout()
+        
+        img_buffer = BytesIO()
+        plt.savefig(img_buffer, format='png')
+        img_buffer.seek(0)
+        plt.close()
+
+        return img_buffer
+
+    except Exception as e:
+        print(f"Erro ao gerar comparativo: {e}")
+        return None
 
 
 
