@@ -16,7 +16,6 @@ app.add_middleware(
 )
 
 # Registra rotas
-app.include_router(api_router)
 app.include_router(students_routes.router)
 app.include_router(graphics_routes.router)
 app.include_router(teacher_routes.router)

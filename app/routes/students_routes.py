@@ -29,3 +29,28 @@ def get_frequency_subject_route(registration: str, subject: str):
         raise HTTPException(status_code=404, detail="Student not found")
 
     return result
+
+@router.get("/students/registrations")
+def get_all_student_registrations():
+    """
+    Retorna uma lista com TODAS as matrículas cadastradas no banco.
+    Útil para verificar quais alunos existem antes de tentar gerar gráficos.
+    """
+    try:
+        # Busca apenas a coluna 'registration' da tabela 'students'
+        response = supabase.table("students").select("registration").execute()
+        
+        if not response.data:
+            return {"message": "Nenhum aluno encontrado no banco.", "registrations": []}
+
+        # Transforma de [{'registration': '123'}, {'registration': '456'}]
+        # Para uma lista simples: ['123', '456']
+        lista_matriculas = [aluno['registration'] for aluno in response.data]
+        
+        return {
+            "total": len(lista_matriculas),
+            "registrations": lista_matriculas
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar matrículas: {str(e)}")
