@@ -11,8 +11,10 @@ python3 -m venv venv
 ```bash
 source venv/bin/activate
 ```
+No Windows
+
 ```bash no Windows
-source .\venv\Scripts\activate    
+.\venv\Scripts\activate    
 ```
 
 
